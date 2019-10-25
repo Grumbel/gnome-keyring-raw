@@ -18,9 +18,19 @@
 import io
 
 from Crypto.Cipher import AES
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256, MD5
 
 from gnome_keyring_raw.binary_reader import BinaryReader
+from gnome_keyring_raw.keyring import Keyring, Item, Attribute
+
+
+def guint32_hash(x: int) -> int:
+    # the file format documentation uses:
+    # 0xdeadbeef ^ x ^ (x>>16 | x & 0xffff << 16)
+    # but the code uses a different algorithm,
+    # see compat_hash_value_as_uint32() in
+    # gnome-keyring-3.34.0/pkcs11/secret-store/gkm-secret-fields.c:
+    return 0x18273645 ^ x ^ (x << 16 | x >> 16);
 
 
 class Parser:
@@ -29,12 +39,11 @@ class Parser:
         self._reader = BinaryReader(fin)
         self._password = password
 
-    def parse(self):
+    def parse(self) -> Keyring:
         r = self._reader
 
         r.expect_bytes(b"GnomeKeyring\n\r\0\n")
 
-        class Keyring: pass
         keyring = Keyring()
         keyring.version = r.read_bytes(2)
         keyring.crypto_algo = r.read_bytes(1)[0]
@@ -56,33 +65,33 @@ class Parser:
         keyring.salt = r.read_bytes(8)
         keyring.reserved = r.read_guint32s(4)
 
-        print("crypto:", keyring.crypto_algo)
-        print("hash:", keyring.hash_algo)
-        print("salt:", keyring.salt)
-        print("hash_iterations:", keyring.hash_iterations)
+        # print("crypto:", keyring.crypto_algo)
+        # print("hash:", keyring.hash_algo)
+        # print("salt:", keyring.salt)
+        # print("hash_iterations:", keyring.hash_iterations)
 
         keyring.num_items = r.read_guint32()
 
         for _ in range(keyring.num_items):
-            class Item: pass
             item = Item()
             item.id = r.read_guint32()
             item.type = r.read_guint32()
             item.num_attributes = r.read_guint32()
-            print("item.num_attributes:", item.num_attributes)
+            # print("item.num_attributes:", item.num_attributes)
             for _ in range(item.num_attributes):
-                class Attribute: pass
                 attribute = Attribute()
                 attribute.name = r.read_string()
-                attribute.type = r.read_guint32()
-                print("attribute.name:", attribute.name)
-                if attribute.type == 0:
+                value_type = r.read_guint32()
+                # print("attribute.name:", attribute.name)
+                if value_type == 0:
                     attribute.hash = r.read_string()
-                    print("HASH:", attribute.hash)
-                elif attribute.type == 1:
+                elif value_type == 1:
                     attribute.hash = r.read_guint32()
                 else:
                     raise Exception("unknown attribute type")
+                item.attrs.append(attribute)
+            keyring.items.append(item)
+
         keyring.num_encrypted_bytes = r.read_guint32()
         # for _ in range(keyring.num_encrypted_bytes):
 
@@ -102,47 +111,60 @@ class Parser:
                 sha256 = SHA256.new(data=sha256.digest())
 
             digest = sha256.digest()
-            print("LEN", len(digest)) # 32
+            # print("LEN", len(digest)) # 32
 
             digests += digest
 
-        print(digests)
+        # print(digests)
         key = digests[0:16]
         iv = digests[16:16+16]  # 16
         aes = AES.new(key, AES.MODE_CBC, iv)
         decrypted = aes.decrypt(encrypted_bytes)
-        print("Result:", decrypted[0:300])
-        print("Rest:", r._fin.read())
+        # print("Result:", decrypted[0:300])
+        # print("Rest:", r._fin.read())
 
-        print("LENGTH:", len(decrypted))
+        # print("LENGTH:", len(decrypted))
         b_r = io.BytesIO(decrypted)
         enc_r = BinaryReader(b_r)
 
         encrypted_hash = enc_r.read_bytes(16)
-        print("encrypted_hash:", encrypted_hash)
+        # print("encrypted_hash:", encrypted_hash)
 
-        for _ in range(keyring.num_items):
-            name = enc_r.read_string()
-            secret = enc_r.read_string()
-            ctime = enc_r.read_time_t()
-            mtime = enc_r.read_time_t()
-            print("name:", name)
-            print("secret:", secret)
+        for i in range(keyring.num_items):
+            item = keyring.items[i]
+            item.name = enc_r.read_string()
+            item.secret = enc_r.read_string()
+            item.ctime = enc_r.read_time_t()
+            item.mtime = enc_r.read_time_t()
+            # print("name:", name)
+            # print("secret:", secret)
 
             reserved = enc_r.read_string()
             reserved_int = enc_r.read_guint32s(4)
 
             num_attributes = enc_r.read_guint32()
-            print("num_attributes:", num_attributes)
-            for _ in range(num_attributes):
+            for i in range(num_attributes):
+                attribute = item.attrs[i]
+
                 name = enc_r.read_string()
-                type = enc_r.read_guint32()
-                if type == 0:
-                    value = enc_r.read_string()
-                elif type == 1:
-                    value = enc_r.read_guint32()
+                if name != attribute.name:
+                    raise Exception("attribute name mismatch")
+
+                value_type = enc_r.read_guint32()
+                if value_type == 0:
+                    attribute.value = enc_r.read_string()
+
+                    # check hash
+                    actual_hash = MD5.new(attribute.value.encode("utf-8")).hexdigest()
+                    if actual_hash != attribute.hash:
+                        Exception(f"hash mismatch, expected {attribute.hash} got {actual_hash}")
+                elif value_type == 1:
+                    attribute.value = enc_r.read_guint32()
+                    if actual_hash != attribute.hash:
+                        Exception(f"hash mismatch, expected {attribute.hash} got {actual_hash}")
                 else:
-                    raise Exception("unknown attribute type")
+                    raise Exception("unknown attribute value type")
+
             acl_len = enc_r.read_guint32()
             for _ in range(acl_len):
                 types_allowed = enc_r.read_guint32()
@@ -151,7 +173,9 @@ class Parser:
                 reserved_str = enc_r.read_string()
                 reserved_uint32 = enc_r.read_guint32()
 
-            # zero padding
+                # zero padding
+
+        return keyring
 
 
 # EOF #

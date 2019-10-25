@@ -17,6 +17,8 @@
 
 import struct
 
+from typing import Optional
+
 
 class BinaryReader:
 
@@ -26,12 +28,14 @@ class BinaryReader:
     def expect_bytes(self, data: bytes) -> None:
         result = self.read_bytes(len(data))
         if result != data:
-            raise Exception("invalid bytes")
+            pos = self._fin.tell() - len(result)
+            raise Exception("invalid bytes at position position f{pos:02x}, expected f{data}")
 
     def read_bytes(self, size: int) -> bytes:
         data = self._fin.read(size)
         if len(data) != size:
-            raise Exception("not enough bytes read")
+            pos = self._fin.tell() - size
+            raise Exception("not enough bytes read at position f{pos:02x}, expected f{size}")
         return data
 
     def read_guint32(self) -> bytes:
@@ -43,16 +47,16 @@ class BinaryReader:
 
     def read_time_t(self) -> bytes:
         data = self.read_bytes(8)
-        return struct.unpack(">II", data)
+        return struct.unpack(">Q", data)[0]
 
-    def read_string(self) -> bytes:
+    def read_string(self) -> Optional[str]:
         """strings: uint32 + bytes, no padding, NULL is encoded as 0xffffffff"""
         length = self.read_guint32()
         if length == 0xffffffff:
-            return b""
+            return None
         else:
             data = self.read_bytes(length)
-            return data
+            return data.decode('utf-8')
 
 
 # EOF #
