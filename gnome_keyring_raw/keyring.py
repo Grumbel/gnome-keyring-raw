@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List
+from typing import List, Dict, Any
 
 
 class ACL:
@@ -40,6 +40,29 @@ class Keyring:
 
     def __init__(self) -> None:
         self.items: List[Item] = []
+
+    def serialize(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "version": list(self.version),
+            "ctime": self.ctime,
+            "mtime": self.mtime,
+            "items": [
+                {
+                    "name": item.name,
+                    "secret": item.secret,
+                    "attributes": [
+                        {
+                            "name": attr.name,
+                            "value": attr.value,
+                            # "hash": attr.hash,
+                        }
+                        for attr in item.attrs
+                    ]
+                }
+                for item in self.items
+            ]
+        }
 
 
 # EOF #

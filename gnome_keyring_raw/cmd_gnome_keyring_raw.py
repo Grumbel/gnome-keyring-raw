@@ -20,6 +20,7 @@
 import argparse
 import getpass
 import sys
+import yaml
 
 from typing import List
 
@@ -44,10 +45,16 @@ def keyring_pretty_print(keyring: Keyring) -> None:
         print()
 
 
+def keyring_print_yaml(keyring: Keyring):
+    print(yaml.dump(keyring.serialize(), sort_keys=False))
+
+
 def parse_args(args: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Inspect raw Gnome keyring files")
     parser.add_argument("-p", "--password", metavar="STRING", default=None,
                         help="Password used to decrypt the file(s)")
+    parser.add_argument("-y", "--yaml", action='store_true', default=False,
+                        help="Dump content in Yaml format")
     parser.add_argument("FILE", nargs="+", help="Gnome keyring file to read")
     return parser.parse_args(args)
 
@@ -65,7 +72,10 @@ def main(argv: List[str]):
             parser = Parser(fin, password)
             keyring = parser.parse()
 
-            keyring_pretty_print(keyring)
+            if args.yaml:
+                 keyring_print_yaml(keyring)
+            else:
+                keyring_pretty_print(keyring)
 
 
 def main_entrypoint():
