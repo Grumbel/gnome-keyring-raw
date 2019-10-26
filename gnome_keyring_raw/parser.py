@@ -115,7 +115,11 @@ class Parser:
         b_r = io.BytesIO(decrypted)
         enc_r = BinaryReader(b_r)
 
-        encrypted_hash = enc_r.read_bytes(16)  # noqa: F841
+        # verify decryption
+        encrypted_hash = enc_r.read_bytes(16)
+        actual_hash = MD5.new(decrypted[16:]).digest()
+        if encrypted_hash != actual_hash:
+            raise Exception("hash mismatching, decryption failed")
 
         for i in range(num_items):
             item = keyring.items[i]
