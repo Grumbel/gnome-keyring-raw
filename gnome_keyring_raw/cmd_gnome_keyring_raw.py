@@ -21,6 +21,7 @@ import argparse
 import getpass
 import sys
 import yaml
+import json
 import shlex
 
 from typing import List
@@ -57,6 +58,11 @@ def keyring_print_yaml(keyring: Keyring):
     print(yaml.dump(keyring.serialize(), sort_keys=False))
 
 
+def keyring_print_json(keyring: Keyring):
+    json.dump(keyring.serialize(), sys.stdout, indent=4)
+    sys.stdout.write('\n')
+
+
 def parse_args(args: List[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Inspect raw Gnome keyring files")
     parser.add_argument("-p", "--password", metavar="STRING", default=None,
@@ -65,6 +71,8 @@ def parse_args(args: List[str]) -> argparse.Namespace:
                         help="Dump content in Yaml format")
     parser.add_argument("-c", "--compact", action='store_true', default=False,
                         help="Dump content in compact format")
+    parser.add_argument("-j", "--json", action='store_true', default=False,
+                        help="Dump content in JSON format")
     parser.add_argument("FILE", nargs="+", help="Gnome keyring file to read")
     return parser.parse_args(args)
 
@@ -86,6 +94,8 @@ def main(argv: List[str]):
                 keyring_print_yaml(keyring)
             elif args.compact:
                 keyring_print_compact(keyring)
+            elif args.json:
+                keyring_print_json(keyring)
             else:
                 keyring_pretty_print(keyring)
 
