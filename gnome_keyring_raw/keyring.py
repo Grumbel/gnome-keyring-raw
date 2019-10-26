@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Union
 
 
 class ACL:
@@ -27,13 +27,20 @@ class ACL:
 class Attribute:
 
     def __init__(self) -> None:
-        pass
+        self.name: str
+        self.value: Union[int, str]
 
 
 class Item:
 
     def __init__(self) -> None:
         self.attrs: List[Attribute] = []
+
+    def getattr(self, name: str) -> Optional[Attribute]:
+        for attr in self.attrs:
+            if attr.name == name:
+                return attr
+        return None
 
 
 class Keyring:
