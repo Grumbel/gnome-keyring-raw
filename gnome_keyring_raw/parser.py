@@ -63,7 +63,7 @@ class Parser:
         keyring.lock_timeout = r.read_guint32()
         keyring.hash_iterations = r.read_guint32()
         keyring.salt = r.read_bytes(8)
-        reserved = r.read_guint32s(4)
+        _ = r.read_guint32s(4)  # reserved
 
         num_items = r.read_guint32()
         for _ in range(num_items):
@@ -99,19 +99,13 @@ class Parser:
                 sha256 = SHA256.new(data=sha256.digest())
 
             digest = sha256.digest()
-            # print("LEN", len(digest)) # 32
-
             digests += digest
 
-        # print(digests)
         key = digests[0:16]
-        iv = digests[16:16 + 16]  # 16
+        iv = digests[16:16 + 16]
         aes = AES.new(key, AES.MODE_CBC, iv)
         decrypted = aes.decrypt(encrypted_bytes)
-        # print("Result:", decrypted[0:300])
-        # print("Rest:", r._fin.read())
 
-        # print("LENGTH:", len(decrypted))
         b_r = io.BytesIO(decrypted)
         enc_r = BinaryReader(b_r)
 
@@ -127,15 +121,13 @@ class Parser:
             item.secret = enc_r.read_string_or_null()
             item.ctime = enc_r.read_time_t()
             item.mtime = enc_r.read_time_t()
-            # print("name:", name)
-            # print("secret:", secret)
 
-            reserved = enc_r.read_string_or_null()  # noqa: F841
-            reserved_int = enc_r.read_guint32s(4)  # noqa: F841
+            _ = enc_r.read_string_or_null()  # reserved
+            _ = enc_r.read_guint32s(4)  # reserved
 
             num_attributes = enc_r.read_guint32()
-            for i in range(num_attributes):
-                attribute = item.attrs[i]
+            for j in range(num_attributes):
+                attribute = item.attrs[j]
 
                 name = enc_r.read_string_or_null()
                 if name != attribute.name:
@@ -162,8 +154,8 @@ class Parser:
                 acl.types_allowed = enc_r.read_guint32()
                 acl.display_name = enc_r.read_string_or_null()
                 acl.pathname = enc_r.read_string_or_null()
-                reserved_str = enc_r.read_string_or_null()  # noqa: F841
-                reserved_uint32 = enc_r.read_guint32()  # noqa: F841
+                _ = enc_r.read_string_or_null()  # reserved
+                _ = enc_r.read_guint32()  # reserved
                 item.acls.append(acl)
                 # zero padding
 

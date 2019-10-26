@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from typing import List
+
 import argparse
 import getpass
+import json
 import sys
 import yaml
-import json
-
-from typing import List
 
 from gnome_keyring_raw.parser import Parser
 from gnome_keyring_raw.keyring import Keyring

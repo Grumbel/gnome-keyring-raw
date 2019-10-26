@@ -1,0 +1,10 @@
+[MESSAGES CONTROL]
+disable=
+  missing-docstring,
+  too-few-public-methods,
+  too-many-instance-attributes,
+  invalid-name,
+  no-else-return,
+  too-many-locals,
+  too-many-statements,
+  too-many-branches,
