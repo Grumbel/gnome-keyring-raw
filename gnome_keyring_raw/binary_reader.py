@@ -29,13 +29,13 @@ class BinaryReader:
         result = self.read_bytes(len(data))
         if result != data:
             pos = self._fin.tell() - len(result)
-            raise Exception("invalid bytes at position position f{pos:02x}, expected f{data}")
+            raise Exception(f"invalid bytes at position position {pos:02x}, expected {data}")
 
     def read_bytes(self, size: int) -> bytes:
         data = self._fin.read(size)
         if len(data) != size:
-            pos = self._fin.tell() - size
-            raise Exception("not enough bytes read at position f{pos:02x}, expected f{size}")
+            pos = self._fin.tell() - len(data)
+            raise Exception(f"not enough bytes read at position {pos:02x}, expected {size}")
         return data
 
     def read_guint32(self) -> bytes:
