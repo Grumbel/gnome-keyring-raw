@@ -16,6 +16,9 @@
 
 import gnome_keyring_raw.cmd_gnome_keyring_raw
 
-gnome_keyring_raw.cmd_gnome_keyring_raw.main_entrypoint()
+
+if __name__ == "__main__":
+    gnome_keyring_raw.cmd_gnome_keyring_raw.main_entrypoint()
+
 
 # EOF #
