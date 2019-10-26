@@ -167,12 +167,13 @@ class Parser:
 
             acl_len = enc_r.read_guint32()
             for _ in range(acl_len):
-                types_allowed = enc_r.read_guint32()
-                display_name = enc_r.read_string()
-                pathname = enc_r.read_string()
+                acl = ACL()
+                acl.types_allowed = enc_r.read_guint32()
+                acl.display_name = enc_r.read_string()
+                acl.pathname = enc_r.read_string()
                 reserved_str = enc_r.read_string()
                 reserved_uint32 = enc_r.read_guint32()
-
+                item.acls.append(acl)
                 # zero padding
 
         return keyring

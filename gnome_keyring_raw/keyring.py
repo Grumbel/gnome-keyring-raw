@@ -21,7 +21,9 @@ from typing import List, Dict, Any, Optional, Union
 class ACL:
 
     def __init__(self) -> None:
-        pass
+        acl.types_allowed: int
+        acl.display_name: Optional[str]
+        acl.pathname: Optional[str]
 
 
 class Attribute:
@@ -35,6 +37,7 @@ class Item:
 
     def __init__(self) -> None:
         self.attrs: List[Attribute] = []
+        self.acls: List[ACL] = []
 
     def getattr(self, name: str) -> Optional[Attribute]:
         for attr in self.attrs:
@@ -65,6 +68,14 @@ class Keyring:
                             # "hash": attr.hash,
                         }
                         for attr in item.attrs
+                    ],
+                    "acls": [
+                        {
+                            "types_allowed": acl.types_allowed,
+                            "display_name": acl.display_name,
+                            "pathname": acl.pathname,
+                        }
+                        for acl in item.acls
                     ]
                 }
                 for item in self.items
