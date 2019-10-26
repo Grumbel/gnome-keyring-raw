@@ -17,12 +17,13 @@
 
 import struct
 
-from typing import Optional
+from typing import cast, List, Optional
+import io
 
 
 class BinaryReader:
 
-    def __init__(self, fin) -> None:
+    def __init__(self, fin: io.BytesIO) -> None:
         self._fin = fin
 
     def expect_bytes(self, data: bytes) -> None:
@@ -38,18 +39,18 @@ class BinaryReader:
             raise Exception(f"not enough bytes read at position {pos:02x}, expected {size}")
         return data
 
-    def read_guint32(self) -> bytes:
+    def read_guint32(self) -> int:
         data = self.read_bytes(4)
-        return struct.unpack(">I", data)[0]
+        return cast(int, struct.unpack(">I", data)[0])
 
-    def read_guint32s(self, size: int):
+    def read_guint32s(self, size: int) -> List[int]:
         return [self.read_guint32() for _ in range(size)]
 
-    def read_time_t(self) -> bytes:
+    def read_time_t(self) -> int:
         data = self.read_bytes(8)
-        return struct.unpack(">Q", data)[0]
+        return cast(int, struct.unpack(">Q", data)[0])
 
-    def read_string(self) -> Optional[str]:
+    def read_string_or_null(self) -> Optional[str]:
         """strings: uint32 + bytes, no padding, NULL is encoded as 0xffffffff"""
         length = self.read_guint32()
         if length == 0xffffffff:
@@ -57,6 +58,12 @@ class BinaryReader:
         else:
             data = self.read_bytes(length)
             return data.decode('utf-8')
+
+    def read_string(self) -> str:
+        result = self.read_string_or_null()
+        if result is None:
+            raise Exception("string is not allowed to be NULL")
+        return result
 
 
 # EOF #

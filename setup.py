@@ -17,22 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
-setup(name='gnome-keyring-raw',
-      version='0.1.0',
-      scripts=[],
-      entry_points={
-          'console_scripts': [
-              'gnome-keyring-raw = gnome_keyring_raw.cmd_gnome_keyring_raw:main_entrypoint',
-          ],
-      },
-      install_requires=[
-          'pycrypto',
-          'pyyaml',
-      ],
-      packages=['gnome_keyring_raw'],
+setup(
+    name='gnome-keyring-raw',
+    version='0.1.0',
+    scripts=[],
+    entry_points={
+        'console_scripts': [
+            'gnome-keyring-raw = gnome_keyring_raw.cmd_gnome_keyring_raw:main_entrypoint',
+        ],
+    },
+    install_requires=[
+        'pycrypto',
+        'pyyaml',
+    ],
+    packages=['gnome_keyring_raw'],
 )
 
 

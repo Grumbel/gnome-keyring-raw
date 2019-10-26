@@ -21,9 +21,9 @@ from typing import List, Dict, Any, Optional, Union
 class ACL:
 
     def __init__(self) -> None:
-        acl.types_allowed: int
-        acl.display_name: Optional[str]
-        acl.pathname: Optional[str]
+        self.types_allowed: int
+        self.display_name: Optional[str]
+        self.pathname: Optional[str]
 
 
 class Attribute:
@@ -31,11 +31,21 @@ class Attribute:
     def __init__(self) -> None:
         self.name: str
         self.value: Union[int, str]
+        self.hash: Union[int, str]
 
 
 class Item:
 
     def __init__(self) -> None:
+        self.id: int
+        self.type: int
+
+        self.name: Optional[str]
+        self.secret: Optional[str]
+
+        self.ctime: int
+        self.mtime: int
+
         self.attrs: List[Attribute] = []
         self.acls: List[ACL] = []
 
@@ -49,6 +59,19 @@ class Item:
 class Keyring:
 
     def __init__(self) -> None:
+        self.version: bytes
+        self.crypto_algo: int
+        self.hash_algo: int
+
+        self.name: Optional[str]
+        self.ctime: int
+        self.mtime: int
+
+        self.flags: int
+        self.lock_timeout: int
+        self.hash_iterations: int
+        self.salt: bytes
+
         self.items: List[Item] = []
 
     def serialize(self) -> Dict[str, Any]:

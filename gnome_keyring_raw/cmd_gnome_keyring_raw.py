@@ -22,7 +22,6 @@ import getpass
 import sys
 import yaml
 import json
-import shlex
 
 from typing import List
 
@@ -55,7 +54,7 @@ def keyring_print_compact(keyring: Keyring):
 
 
 def keyring_print_yaml(keyring: Keyring):
-    print(yaml.dump(keyring.serialize(), sort_keys=False))
+    print(yaml.dump(data=keyring.serialize()))
 
 
 def keyring_print_python(keyring: Keyring):
