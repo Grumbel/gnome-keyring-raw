@@ -10,21 +10,27 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-      in rec {
-        packages = flake-utils.lib.flattenTree {
-          gnome-keyring-raw = pkgs.python3Packages.buildPythonPackage rec {
+        pythonPackages = pkgs.python3Packages;
+      in {
+        packages = rec {
+          default = gnome-keyring-raw;
+
+          gnome-keyring-raw = pythonPackages.buildPythonPackage rec {
             pname = "gnome-keyring-raw";
             version = "0.1.0";
+
             src = nixpkgs.lib.cleanSource ./.;
-            nativeBuildInputs = with pkgs.python3.pkgs; [
+
+            nativeBuildInputs = with pythonPackages; [
               flake8
             ];
-            propagatedBuildInputs = with pkgs.python3.pkgs; [
+
+            propagatedBuildInputs = with pythonPackages; [
               pyyaml
               pycrypto
             ];
            };
         };
-        defaultPackage = packages.gnome-keyring-raw;
-      });
+      }
+    );
 }
